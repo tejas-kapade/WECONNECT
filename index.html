@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Pool Connect</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f4f6f9;
+      color: #333;
+    }
+
+    header {
+      background-color: #4a90e2;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+      font-size: 1.75rem;
+      font-weight: bold;
+    }
+
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      max-width: 1000px;
+      margin: 2rem auto;
+      gap: 2rem;
+      padding: 1rem;
+    }
+
+    .panel {
+      background: #fff;
+      padding: 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      flex: 1 1 300px;
+    }
+
+    h2 {
+      text-align: center;
+      color: #2c3e50;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin-top: 1rem;
+    }
+
+    li {
+      padding: 0.75rem 1rem;
+      background: #ecf0f1;
+      margin-bottom: 0.5rem;
+      border-radius: 6px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    input {
+      padding: 0.75rem;
+      font-size: 1rem;
+      border: 1px solid #bdc3c7;
+      border-radius: 6px;
+      width: 100%;
+    }
+
+    input:focus {
+      border-color: #3498db;
+      outline: none;
+    }
+
+    button {
+      padding: 0.75rem;
+      font-size: 1rem;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #2980b9;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+      }
+    }
+
+    /* Base list style */
+#userList li {
+  padding: 10px;
+  margin-bottom: 5px;
+  background-color: #f5f5f5;
+  border-radius: 6px;
+  animation: shineEffect 2s linear 1;
+}
+
+/* Stagger each list item with delay
+#userList li:nth-child(1) { animation-delay: 0s; }
+#userList li:nth-child(2) { animation-delay: 0.3s; }
+#userList li:nth-child(3) { animation-delay: 0.6s; }
+#userList li:nth-child(4) { animation-delay: 0.9s; }
+#userList li:nth-child(5) { animation-delay: 1.2s; }
+ Add more if you have more users, or use JS to generate delays */
+
+@keyframes shineEffect {
+  0%, 100% { background-color: #f5f5f5; }
+  50% { background-color: #8af1ff; }
+}
+
+
+
+  </style>
+</head>
+<body>
+  <header>My Pool Connect
+    <br><span style="color:#fff;font-size: medium;">Chat anonymously and securely</span>
+  </header>
+
+  <div class="container">
+    <!-- Left Panel: Add User and Login -->
+    <div class="panel">
+      
+      <div class="form-group" id="register-panel">
+        <h2>Register your ID</h2>
+        <input id="user" placeholder="Username">
+        <input id="password" placeholder="Password" type="password">
+        <input id="confirmPassword" placeholder="Confirm Password" type="password">
+        <button onclick="addUser()">Register</button>
+      </div>
+
+      <button id="showLoginBtn" onclick="toggleLogin()" style="margin-top: 2rem; background-color: #6bc641;">Already a user? Login here</button>
+
+<div id="loginForm" class="form-group" style="display: none;">
+  <h2>Login</h2>
+  <input id="loginUser" placeholder="Username">
+  <input id="loginPassword" placeholder="Password" type="password">
+  <button onclick="loginUser()">Login</button>
+  <button onclick="registerUser()" style="background-color: #6bc641">New User? Register here</button>
+  <p id="loginStatus" style="color: green;"></p>
+</div>  
+
+    </div>
+
+    <!-- Right Panel: User List -->
+    <div class="panel">
+      <h2>Registered Users</h2>
+      <ul id="userList"></ul>
+    </div>
+  </div>
+
+  <script>
+
+
+    async function fetchUsers() {
+      const res = await fetch('db.php');
+      const users = await res.json();
+      const list = document.getElementById('userList');
+      list.innerHTML = '';
+      users.forEach(u => {
+        const li = document.createElement('li');
+        li.textContent = `${u.id}: ${u.username}`;
+        list.appendChild(li);
+      });
+
+      applyStaggeredAnimation();
+    }
+
+    function toggleLogin() {
+  document.getElementById('loginForm').style.display = 'flex';
+  document.getElementById('showLoginBtn').style.display = 'none';
+  document.getElementById('register-panel').style.display = 'none';
+}
+ 
+function registerUser(){
+   document.getElementById('register-panel').style.display = 'flex';
+   document.getElementById('loginForm').style.display = 'none';
+   document.getElementById('showLoginBtn').style.display = 'flex';
+}
+
+    async function addUser() {
+  const user = document.getElementById('user').value.trim();
+  const password = document.getElementById('password').value.trim();
+  const confirmPassword = document.getElementById('confirmPassword').value.trim();
+
+  if (!user || !password || !confirmPassword) {
+    alert('All fields are required!');
+    return;
+  }
+
+  if (password !== confirmPassword) {
+    alert('Passwords do not match!');
+    return;
+  }
+
+  const res = await fetch('db.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ user, password })
+  });
+
+  const result = await res.json();
+  if (result.success) {
+    window.location.href = "welcome.php";
+  } else {
+    alert('Registration failed: ' + result.message);
+  }
+}
+
+    async function loginUser() {
+      const user = document.getElementById('loginUser').value.trim();
+      const password = document.getElementById('loginPassword').value.trim();
+
+      const res = await fetch('login.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user, password })
+      });
+
+      const result = await res.json();
+      if (result.success) {
+        window.location.href = result.admin ? 'admin.html' : 'welcome.php';
+      } else {
+        document.getElementById('loginStatus').textContent = "Login failed: " + result.message;
+      }
+    }
+
+    fetchUsers();
+    setInterval(fetchUsers, 3000);
+
+
+    function applyStaggeredAnimation() {
+  const items = document.querySelectorAll('#userList li');
+  items.forEach((item, index) => {
+    // Reset animation to force restart
+    //item.style.animation = 'none';
+    //item.offsetHeight; // force reflow
+    //item.style.animation = `shineEffect 2s linear 1`;
+    item.style.animationDelay = `${index * 0.3}s`;
+  });
+}
+
+
+  </script>
+</body>
+</html>

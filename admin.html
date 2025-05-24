@@ -1,0 +1,73 @@
+<!-- admin.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Panel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f8f9fa;
+      margin: 0;
+      padding: 2rem;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      margin-top: 2rem;
+    }
+    th, td {
+      padding: 1rem;
+      border: 1px solid #ccc;
+      text-align: left;
+    }
+    th {
+      background: #007bff;
+      color: white;
+    }
+    @media (max-width: 600px) {
+      table, thead, tbody, th, td, tr {
+        display: block;
+      }
+      td {
+        padding: 0.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Admin Panel - Registered Users</h1>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Username</th>
+        <th>Password (Hashed)</th>
+      </tr>
+    </thead>
+    <tbody id="userTable"></tbody>
+  </table>
+
+  <script>
+    async function fetchUsers() {
+      const res = await fetch('admin_data.php');
+      const users = await res.json();
+      const table = document.getElementById('userTable');
+      table.innerHTML = '';
+      users.forEach(u => {
+        const row = document.createElement('tr');
+        row.innerHTML = `<td>${u.id}</td><td>${u.username}</td><td>${u.password}</td>`;
+        table.appendChild(row);
+      });
+    }
+
+    fetchUsers();
+  </script>
+</body>
+</html>
