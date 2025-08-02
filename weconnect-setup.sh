@@ -19,6 +19,7 @@ sudo mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '989878'; FLUSH PRIVI
 
 # Clone project from GitHub
 cd /var/www/html
+sudo rm -rf /var/www/html/*
 sudo git clone https://github.com/tejas-kapade/WECONNECT .
 sudo chown -R www-data:www-data /var/www/html
 
