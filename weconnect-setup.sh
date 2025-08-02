@@ -26,4 +26,10 @@ sudo chown -R www-data:www-data /var/www/html
 mysql -u root -p'989878' -e "CREATE DATABASE WECONDB;"
 mysql -u root -p'989878' WECONDB < wecondb_bak.sql
 
+#Lets check which services are running currently on localhost
+apt install nmap -y
+nmap localhost
+
+echo "Weconnect setup has been finished !!!"
+
 
