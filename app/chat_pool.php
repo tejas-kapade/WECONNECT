@@ -5,12 +5,7 @@ if (!isset($_SESSION['user']) || !isset($_SESSION['joined_pool_id'])) {
     exit;
 }
 
-$host = 'localhost';
-$dbname = 'WECONDB';
-$user = 'root';
-$pass = '989878';
-
-$conn = new mysqli($host, $user, $pass, $dbname);
+include 'db.php';
 $pool_id = $_SESSION['joined_pool_id'];
 
 // Get pool name
@@ -66,16 +61,35 @@ header {
     box-shadow: 0 0 10px rgba(0,0,0,0.1);
     margin-bottom: 20px;
     transition: height 0.3s ease-in-out;
+    display: flex;
+    flex-direction: column;
 }
 
 /* Chat message */
 .message {
     margin: 10px 0;
-    padding: 10px;
-    border-radius: 8px;
-    max-width: 60%;
+    padding: 12px 16px;
+    border-radius: 18px;
+    max-width: 70%;
     position: relative;
     word-wrap: break-word;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.2s ease;
+}
+
+.message:hover {
+    transform: translateY(-1px);
+}
+
+/* Message alignment */
+.message.self {
+    align-self: flex-end;
+    background: #d1eaff;
+}
+
+.message.other {
+    align-self: flex-start;
+    background: #fff4e5;
 }
 
 .username {
@@ -225,7 +239,8 @@ header {
         $user_color_classes = ['user-1', 'user-2', 'user-3', 'user-4', 'user-5'];
         foreach ($messages as $msg) {
             $class = $user_color_classes[crc32($msg['username']) % count($user_color_classes)];
-            echo '<div class="message ' . $class . '">';
+            $alignment = ($msg['username'] === $_SESSION['user']) ? 'self' : 'other';
+            echo '<div class="message ' . $class . ' ' . $alignment . '">';
             echo '<span class="username">' . htmlspecialchars($msg['username']) . '</span>';
             echo htmlspecialchars($msg['message']);
             echo '<span class="timestamp">' . date("d M Y, h:i A", strtotime($msg['sent_at'])) . '</span>';
@@ -308,7 +323,8 @@ async function loadMessages() {
     messages.forEach((msg, index) => {
         const msgDiv = document.createElement('div');
         const userClass = userClasses[Math.abs(msg.username.hashCode()) % userClasses.length];
-        msgDiv.className = `message ${userClass}`;
+        const alignment = (msg.username === <?php echo json_encode($_SESSION['user']); ?>) ? 'self' : 'other';
+        msgDiv.className = `message ${userClass} ${alignment}`;
 
         // Only animate last (newest) message
         if (index === messages.length - 1 && messages.length > lastMessageCount) {
@@ -324,7 +340,11 @@ async function loadMessages() {
     });
 
     lastMessageCount = messages.length;
-}
+    scrollToBottom();  // Auto-scroll to latest messages
+    chatBox.style.width = '85vw';  // Increase chat box width
+    document.querySelectorAll('.message').forEach(msg => {
+        msg.style.minWidth = '200px';  // Ensure minimum width for timestamp visibility
+    });
 
 
 // Add simple hashCode function for username color mapping

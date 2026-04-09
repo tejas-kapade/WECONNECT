@@ -1,0 +1,44 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# WeConnect — Ingress
+#
+# Requires an Ingress Controller in your cluster (e.g. ingress-nginx).
+# Install with: kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.10.1/deploy/static/provider/cloud/deploy.yaml
+#
+# For TLS, install cert-manager and uncomment the tls + annotations block.
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: weconnect-ingress
+  namespace: weconnect
+  labels:
+    app.kubernetes.io/name:      weconnect
+    app.kubernetes.io/component: ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target:         /
+    nginx.ingress.kubernetes.io/proxy-body-size:        "8m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout:     "60"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout:  "10"
+    # Uncomment for automatic TLS via cert-manager:
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    # nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+
+  # ── TLS (uncomment and set your domain) ────────────────────────────────────
+  # tls:
+  #   - hosts:
+  #       - weconnect.yourdomain.com
+  #     secretName: weconnect-tls
+
+  rules:
+    - host: weconnect.yourdomain.com   # ← Replace with your actual domain
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: weconnect-app
+                port:
+                  name: http

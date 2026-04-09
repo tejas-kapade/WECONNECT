@@ -1,0 +1,122 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# WeConnect — PHP/Apache Application Deployment
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: weconnect-app
+  namespace: weconnect
+  labels:
+    app.kubernetes.io/name:      weconnect
+    app.kubernetes.io/component: app
+spec:
+  replicas: 2                        # Horizontal scale — increase as needed
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app:       weconnect
+      component: app
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge:       1
+      maxUnavailable: 0              # Zero-downtime deploys
+
+  template:
+    metadata:
+      labels:
+        app:       weconnect
+        component: app
+    spec:
+      # Wait for DB to be reachable before starting
+      initContainers:
+        - name: wait-for-db
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z weconnect-db 3306; do
+                echo "Waiting for MariaDB..."; sleep 3;
+              done
+              echo "MariaDB is up."
+
+      containers:
+        - name: weconnect
+          # Replace with your actual image name after building & pushing:
+          # e.g. docker build -t ghcr.io/<you>/weconnect:latest .
+          #      docker push ghcr.io/<you>/weconnect:latest
+          image: ghcr.io/tejas-kapade/weconnect:latest
+          imagePullPolicy: Always
+
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+
+          env:
+            - name: WECON_DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: weconnect-secrets
+                  key: WECON_DB_PASS
+            - name: WECON_ADMIN_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: weconnect-secrets
+                  key: WECON_ADMIN_PASS
+
+          resources:
+            requests:
+              cpu:    100m
+              memory: 128Mi
+            limits:
+              cpu:    500m
+              memory: 256Mi
+
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds:       20
+            timeoutSeconds:      5
+            failureThreshold:    3
+
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds:       10
+            timeoutSeconds:      3
+            failureThreshold:    3
+
+          # Security hardening — drop all Linux capabilities
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem:   false   # Apache needs /tmp & /run
+            runAsNonRoot:             false   # apache2-foreground requires root start
+            capabilities:
+              drop: ["NET_ADMIN", "SYS_ADMIN"]
+
+---
+# ─── ClusterIP Service (internal) ────────────────────────────────────────────
+apiVersion: v1
+kind: Service
+metadata:
+  name: weconnect-app
+  namespace: weconnect
+  labels:
+    app.kubernetes.io/name:      weconnect
+    app.kubernetes.io/component: app
+spec:
+  type: ClusterIP
+  selector:
+    app:       weconnect
+    component: app
+  ports:
+    - name:       http
+      port:       80
+      targetPort: http
+      protocol:   TCP

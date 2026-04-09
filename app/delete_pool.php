@@ -12,16 +12,7 @@ $user = $_SESSION['user'];
 $data = json_decode(file_get_contents("php://input"), true);
 $pool_id = $data['pool_id'];
 
-$host = 'localhost';
-$dbname = 'WECONDB';
-$username = 'root';
-$password = '989878';
-
-$conn = new mysqli($host, $username, $password, $dbname);
-if ($conn->connect_error) {
-    echo json_encode(['success' => false, 'message' => 'DB connection failed']);
-    exit;
-}
+require_once __DIR__ . '/db.php';
 
 // Only delete if the pool belongs to the logged-in user
 $stmt = $conn->prepare("DELETE FROM chat_pools WHERE id = ? AND created_by = ?");

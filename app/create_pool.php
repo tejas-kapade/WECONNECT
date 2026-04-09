@@ -2,16 +2,7 @@
 session_start();
 header('Content-Type: application/json');
 
-$host = 'localhost';
-$dbname = 'WECONDB';
-$user = 'root';
-$pass = '989878';
-
-$conn = new mysqli($host, $user, $pass, $dbname);
-if ($conn->connect_error) {
-    echo json_encode(['success' => false, 'message' => 'Database connection failed']);
-    exit;
-}
+require_once __DIR__ . '/db.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $data = json_decode(file_get_contents("php://input"), true);

@@ -1,11 +1,11 @@
-    <?php
-    session_start();
-    if (!isset($_SESSION['user'])) {
-        header('Location: index.html');
-        exit;
-    }
-    $username = $_SESSION['user'];
-    ?>
+<?php
+session_start();
+if (!isset($_SESSION['user'])) {
+    header('Location: index.html');
+    exit;
+}
+$username = $_SESSION['user'];
+?>
     <!DOCTYPE html>
     <html lang="en">
     <head>

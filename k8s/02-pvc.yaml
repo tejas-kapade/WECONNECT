@@ -1,0 +1,20 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# WeConnect — Persistent Volume Claim (MariaDB data directory)
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: weconnect-db-pvc
+  namespace: weconnect
+  labels:
+    app.kubernetes.io/name:      weconnect
+    app.kubernetes.io/component: database
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  # Remove storageClassName to use the cluster default,
+  # or set it to your preferred provisioner (e.g. "gp2", "standard").
+  # storageClassName: standard

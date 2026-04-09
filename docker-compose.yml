@@ -1,0 +1,54 @@
+version: "3.9"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# WeConnect — Local Development Stack
+# Usage: docker compose up -d
+# App:  http://localhost:8080
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── PHP / Apache application ──────────────────────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: weconnect-app
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    environment:
+      WECON_DB_PASS:    ${WECON_DB_PASS}
+      WECON_ADMIN_PASS: ${WECON_ADMIN_PASS}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - weconnect-net
+
+  # ── MariaDB database ──────────────────────────────────────────────────────
+  db:
+    image: mariadb:10.11
+    container_name: weconnect-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${WECON_DB_PASS}
+      MYSQL_DATABASE:      WECONDB
+    volumes:
+      - db-data:/var/lib/mysql
+      - ./wecondb_bak.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - weconnect-net
+
+volumes:
+  db-data:
+
+networks:
+  weconnect-net:
+    driver: bridge

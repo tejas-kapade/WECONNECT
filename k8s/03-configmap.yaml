@@ -1,0 +1,46 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# WeConnect — Database Initialisation ConfigMap
+#
+# Holds the schema SQL that MariaDB runs on first boot.
+# Replace the inline SQL below with the full content of wecondb_bak.sql,
+# or mount the file directly from a CI pipeline.
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: weconnect-db-init
+  namespace: weconnect
+  labels:
+    app.kubernetes.io/name:      weconnect
+    app.kubernetes.io/component: database
+data:
+  01-schema.sql: |
+    -- WeConnect database schema
+    -- Replace this block with the full content of wecondb_bak.sql
+
+    CREATE DATABASE IF NOT EXISTS WECONDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    USE WECONDB;
+
+    CREATE TABLE IF NOT EXISTS users (
+        id       INT          NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        username VARCHAR(32)  NOT NULL UNIQUE,
+        password VARCHAR(255) NOT NULL,
+        created_at DATETIME   NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+    CREATE TABLE IF NOT EXISTS pools (
+        id         INT         NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        name       VARCHAR(64) NOT NULL UNIQUE,
+        created_by VARCHAR(32) NOT NULL,
+        created_at DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+    CREATE TABLE IF NOT EXISTS messages (
+        id         INT           NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        pool_id    INT           NOT NULL,
+        username   VARCHAR(32)   NOT NULL,
+        message    VARCHAR(1000) NOT NULL,
+        sent_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_pool_sent (pool_id, sent_at),
+        FOREIGN KEY (pool_id) REFERENCES pools(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

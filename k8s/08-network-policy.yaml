@@ -1,0 +1,61 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# WeConnect — Network Policies
+# Ensures only the app pods can reach the database — nothing else.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Allow the app to reach the DB on port 3306
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-app-to-db
+  namespace: weconnect
+spec:
+  podSelector:
+    matchLabels:
+      component: database
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              component: app
+      ports:
+        - protocol: TCP
+          port:     3306
+
+---
+# Allow ingress controller to reach the app on port 80
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-to-app
+  namespace: weconnect
+spec:
+  podSelector:
+    matchLabels:
+      component: app
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port:     80
+
+---
+# Deny all other ingress to the DB by default
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-all-db-ingress
+  namespace: weconnect
+spec:
+  podSelector:
+    matchLabels:
+      component: database
+  policyTypes:
+    - Ingress

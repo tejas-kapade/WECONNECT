@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: weconnect
+  labels:
+    app.kubernetes.io/name: weconnect
+    app.kubernetes.io/managed-by: kubectl

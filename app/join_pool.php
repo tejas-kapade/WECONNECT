@@ -6,15 +6,7 @@ if (!isset($_SESSION['user'])) {
     exit;
 }
 
-$host = 'localhost';
-$dbname = 'WECONDB';
-$user = 'root';
-$pass = '989878';
-
-$conn = new mysqli($host, $user, $pass, $dbname);
-if ($conn->connect_error) {
-    die("DB connection failed");
-}
+require_once __DIR__ . '/db.php';
 
 $data = json_decode(file_get_contents("php://input"), true);
 $pool_id = $data['pool_id'];

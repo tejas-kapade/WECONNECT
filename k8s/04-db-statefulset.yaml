@@ -1,0 +1,105 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# WeConnect — MariaDB StatefulSet
+# Uses a StatefulSet (not Deployment) so the PVC stays bound to the pod.
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: weconnect-db
+  namespace: weconnect
+  labels:
+    app.kubernetes.io/name:      weconnect
+    app.kubernetes.io/component: database
+spec:
+  serviceName: weconnect-db
+  replicas: 1                        # Single-node DB; scale with read replicas if needed
+  selector:
+    matchLabels:
+      app:       weconnect
+      component: database
+  template:
+    metadata:
+      labels:
+        app:       weconnect
+        component: database
+    spec:
+      terminationGracePeriodSeconds: 60
+
+      containers:
+        - name: mariadb
+          image: mariadb:10.11
+          imagePullPolicy: IfNotPresent
+
+          ports:
+            - name: mysql
+              containerPort: 3306
+              protocol: TCP
+
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: weconnect-secrets
+                  key: MYSQL_ROOT_PASSWORD
+            - name: MYSQL_DATABASE
+              value: WECONDB
+
+          volumeMounts:
+            - name: db-data
+              mountPath: /var/lib/mysql
+            - name: db-init
+              mountPath: /docker-entrypoint-initdb.d
+              readOnly: true
+
+          resources:
+            requests:
+              cpu:    250m
+              memory: 256Mi
+            limits:
+              cpu:    500m
+              memory: 512Mi
+
+          livenessProbe:
+            exec:
+              command: ["healthcheck.sh", "--connect", "--innodb_initialized"]
+            initialDelaySeconds: 30
+            periodSeconds:       15
+            timeoutSeconds:      5
+            failureThreshold:    3
+
+          readinessProbe:
+            exec:
+              command: ["healthcheck.sh", "--connect", "--innodb_initialized"]
+            initialDelaySeconds: 15
+            periodSeconds:       10
+            timeoutSeconds:      5
+            failureThreshold:    3
+
+      volumes:
+        - name: db-data
+          persistentVolumeClaim:
+            claimName: weconnect-db-pvc
+        - name: db-init
+          configMap:
+            name: weconnect-db-init
+
+---
+# ─── Headless service (StatefulSet DNS + internal discovery) ─────────────────
+apiVersion: v1
+kind: Service
+metadata:
+  name: weconnect-db
+  namespace: weconnect
+  labels:
+    app.kubernetes.io/name:      weconnect
+    app.kubernetes.io/component: database
+spec:
+  clusterIP: None                    # Headless — StatefulSet requirement
+  selector:
+    app:       weconnect
+    component: database
+  ports:
+    - name:       mysql
+      port:       3306
+      targetPort: mysql
+      protocol:   TCP
