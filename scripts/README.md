@@ -1,5 +1,5 @@
-##These Scrips are for Manual installation in VM
-##Can be used in Terraform as startup script
+## These Scrips are for Manual installation in VM <br>
+## Can be used in Terraform as startup script
 
 ```
 ...
